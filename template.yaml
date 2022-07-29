@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "AWS - Simple API with SAM"
+
+Resources:
+  ### Role ###
+  LambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: "AccessS3Bucket"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: "*"
+
+  ### Bucket S3 ###
+  SimpleBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName:
+        Fn::Join: ["-", [Ref: AWS::StackName, "simple-bucket"]]
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - PUT
+            AllowedOrigins:
+              - "*"
+            Id:
+              Fn::Join: ["-", [Ref: AWS::StackName, "simple-bucket-cors-rule"]]
+            MaxAge: 1800
+
+  ### Lambda ###
+  SimpleLamdbaFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - LambdaRole
+    Properties:
+      Handler: app.handler
+      CodeUri: ./simple-log
+      Runtime: nodejs16.x
+      Role:
+        Fn::GetAtt: LambdaRole.Arn
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: '/simple-log'
+            Method: post
