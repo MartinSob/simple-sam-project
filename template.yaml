@@ -57,6 +57,10 @@ Resources:
       Handler: app.handler
       CodeUri: ./simple-log
       Runtime: nodejs16.x
+      Environment:
+        Variables:
+          BUCKET_NAME:
+            Ref: SimpleBucket
       Role:
         Fn::GetAtt: LambdaRole.Arn
       Events:
